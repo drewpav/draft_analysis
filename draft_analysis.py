@@ -1,41 +1,17 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import requests
-from io import StringIO
-import numpy as np
+import os
 
 st.set_page_config(page_title="NBA Draft vs Performance", layout="wide")
 st.title("NBA Draft Position vs Current Season Performance")
-st.markdown("Analysing how draft position correlates with 2024-25 season performance")
+st.markdown("Analyzing how draft position correlates with 2024-25 season performance")
 
 @st.cache_data
-def fetch_draft_data():
-    """Scrape 2024 NBA draft data from Basketball Reference"""
-    url = "https://www.basketball-reference.com/draft/NBA_2024.html"
+def load_draft_data():
+    """Load draft data from CSV"""
     try:
-<<<<<<< Updated upstream
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        
-        tables = pd.read_html(StringIO(response.text))
-        df = tables[0]
-        
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.droplevel(0)
-        
-        pk_col = 'Pk' if 'Pk' in df.columns else df.columns[0]
-        player_col = 'Player' if 'Player' in df.columns else df.columns[1]
-        tm_col = 'Tm' if 'Tm' in df.columns else df.columns[2]
-        
-        df = df[[pk_col, player_col, tm_col]].copy()
-        df.columns = ['Pk', 'Player', 'Tm']
-        
-        df = df[df['Pk'].notna()]
-        df['Pk'] = pd.to_numeric(df['Pk'], errors='coerce')
-=======
-        df = pd.read_csv('nba_draft_2024.csv')
+        df = pd.read_csv('NBA/nba_draft_2024.csv')
         df['Player'] = df['Player'].astype(str).str.strip()
         df['Player_Clean'] = df['Player'].str.replace(r'\s+(Jr\.|Sr\.|III|II|IV)\.?$', '', regex=True).str.strip()
         return df
@@ -47,40 +23,11 @@ def fetch_draft_data():
 def load_season_stats():
     """Load season stats from CSV"""
     try:
-        df = pd.read_csv('nba_season_2024_25.csv')
->>>>>>> Stashed changes
+        df = pd.read_csv('NBA/nba_season_2024_25.csv')
         df['Player'] = df['Player'].astype(str).str.strip()
         df['Player_Clean'] = df['Player'].str.replace(r'\s+(Jr\.|Sr\.|III|II|IV)\.?$', '', regex=True).str.strip()
         
-        return df.dropna(subset=['Pk'])
-    except Exception as e:
-        st.error(f"Error fetching draft data: {str(e)}")
-        return None
-
-@st.cache_data
-def fetch_season_stats():
-    """Scrape 2024-25 season stats from Basketball Reference"""
-    url = "https://www.basketball-reference.com/leagues/NBA_2025_per_game.html"
-    try:
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        
-        tables = pd.read_html(StringIO(response.text))
-        df = tables[0]
-        
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.droplevel(0)
-        
-        df = df[df['Player'].notna()].copy()
-        df['Player'] = df['Player'].astype(str).str.strip()
-        df['Player_Clean'] = df['Player'].str.replace(r'\s+(Jr\.|Sr\.|III|II|IV)\.?$', '', regex=True).str.strip()
-        
-        numeric_cols = ['PTS', 'FG%', '3P%', 'TRB', 'AST', 'STL', 'BLK', 'MP']
-        for col in numeric_cols:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
-        
+        # Calculate composite score
         df['Composite Score'] = (
             df['PTS'] * 1.0 + 
             df['AST'] * 1.5 + 
@@ -89,29 +36,34 @@ def fetch_season_stats():
             df['BLK'] * 3.0
         ).round(2)
         
-        return df[['Player', 'Player_Clean', 'PTS', 'FG%', '3P%', 'TRB', 'AST', 'STL', 'BLK', 'MP', 'Composite Score']].dropna(subset=['PTS'])
+        return df
     except Exception as e:
-        st.error(f"Error fetching season stats: {str(e)}")
+        st.error(f"Error loading season stats: {str(e)}")
         return None
 
 with st.spinner("Loading NBA data..."):
-    draft_df = fetch_draft_data()
-    season_df = fetch_season_stats()
+    draft_df = load_draft_data()
+    season_df = load_season_stats()
 
 if draft_df is not None and season_df is not None:
     merged_df = draft_df.merge(season_df, left_on='Player_Clean', right_on='Player_Clean', how='inner', suffixes=('_draft', '_stats'))
     merged_df['Player'] = merged_df['Player_draft']
-    # Use drafted team, not current team
-    merged_df['Drafted_Team'] = merged_df['Tm']
-    merged_df['Tm'] = merged_df['Drafted_Team'].fillna('N/A')
+    
+    # Get current team from season stats
+    if 'Tm_stats' in merged_df.columns:
+        merged_df['Tm'] = merged_df['Tm_stats'].fillna('N/A')
+    elif 'Tm' in merged_df.columns:
+        merged_df['Tm'] = merged_df['Tm'].fillna('N/A')
+    else:
+        merged_df['Tm'] = 'N/A'
     
     if len(merged_df) > 0:
         tab1, tab2, tab3 = st.tabs(["Interactive Dashboard", "Player Comparison", "Team View"])
         
         with tab1:
-            st.sidebar.header("Analysis Filters")
+            st.sidebar.header("Analysis Filtering")
             
-            search_term = st.sidebar.text_input("Search for a player", "", help="Type any part of a player's name")
+            search_term = st.sidebar.text_input("Player Search", "", help="Type any part of a player's name")
             
             metric = st.sidebar.selectbox(
                 "Select Performance Metric",
@@ -123,7 +75,7 @@ if draft_df is not None and season_df is not None:
                 "Minimum Minutes Played",
                 min_value=0,
                 max_value=int(merged_df['MP'].max()),
-                value=15,
+                value=25,
                 step=5
             )
             
@@ -217,7 +169,7 @@ if draft_df is not None and season_df is not None:
                 with st.expander("View Full Dataset"):
                     display_cols = ['Pk', 'Player', 'Tm', 'Composite Score', 'PTS', 'AST', 'TRB', 'STL', 'BLK', 'FG%', '3P%', 'MP']
                     display_df = filtered_df[display_cols].sort_values('Pk').copy()
-                    display_df.rename(columns={'Tm': 'Drafted By'}, inplace=True)
+                    display_df.rename(columns={'Tm': 'Current Team'}, inplace=True)
                     st.dataframe(display_df, hide_index=True)
                     
                 if metric == "Composite Score":
@@ -259,13 +211,13 @@ if draft_df is not None and season_df is not None:
                 with col1:
                     st.markdown(f"### {player1}")
                     st.metric("Draft Position", f"#{int(p1_data['Pk'])}")
-                    st.metric("Drafted By", p1_data['Tm'])
+                    st.metric("Current Team", p1_data['Tm'])
                     st.metric("Minutes Played", f"{p1_data['MP']:.1f}")
                 
                 with col2:
                     st.markdown(f"### {player2}")
                     st.metric("Draft Position", f"#{int(p2_data['Pk'])}")
-                    st.metric("Drafted By", p2_data['Tm'])
+                    st.metric("Current Team", p2_data['Tm'])
                     st.metric("Minutes Played", f"{p2_data['MP']:.1f}")
                 
                 st.markdown("---")
@@ -375,4 +327,4 @@ if draft_df is not None and season_df is not None:
     else:
         st.error("No matching data found between draft and season stats")
 else:
-    st.error("Unable to load data. Please try refreshing the page.")
+    st.error("Unable to load data. Please make sure CSV files are in the correct location.")
