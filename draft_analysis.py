@@ -14,6 +14,7 @@ def fetch_draft_data():
     """Scrape 2024 NBA draft data from Basketball Reference"""
     url = "https://www.basketball-reference.com/draft/NBA_2024.html"
     try:
+<<<<<<< Updated upstream
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(url, headers=headers)
         response.raise_for_status()
@@ -33,6 +34,21 @@ def fetch_draft_data():
         
         df = df[df['Pk'].notna()]
         df['Pk'] = pd.to_numeric(df['Pk'], errors='coerce')
+=======
+        df = pd.read_csv('nba_draft_2024.csv')
+        df['Player'] = df['Player'].astype(str).str.strip()
+        df['Player_Clean'] = df['Player'].str.replace(r'\s+(Jr\.|Sr\.|III|II|IV)\.?$', '', regex=True).str.strip()
+        return df
+    except Exception as e:
+        st.error(f"Error loading draft data: {str(e)}")
+        return None
+
+@st.cache_data
+def load_season_stats():
+    """Load season stats from CSV"""
+    try:
+        df = pd.read_csv('nba_season_2024_25.csv')
+>>>>>>> Stashed changes
         df['Player'] = df['Player'].astype(str).str.strip()
         df['Player_Clean'] = df['Player'].str.replace(r'\s+(Jr\.|Sr\.|III|II|IV)\.?$', '', regex=True).str.strip()
         
