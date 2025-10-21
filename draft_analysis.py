@@ -75,7 +75,7 @@ if draft_df is not None and season_df is not None:
                 "Minimum Minutes Played",
                 min_value=0,
                 max_value=int(merged_df['MP'].max()),
-                value=25,
+                value=15,
                 step=5
             )
             
