@@ -29,6 +29,14 @@ This type of analysis could support:
 - **Season previews/reviews** - Performance tracking throughout the year
 - **Trade deadline analysis** - Which young players are exceeding value?
 
+## Data Sources
+
+The app uses two CSV files containing:
+- **2024 NBA Draft data** - Pick number, player name, and drafted team
+- **2024-25 Season statistics** - Current performance metrics including points, assists, rebounds, steals, blocks, shooting percentages, and minutes played
+
+Data is refreshed periodically to ensure accuracy throughout the season.
+
 ## Technical Stack
 
 - **Python** for data processing libraries
