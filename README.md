@@ -4,7 +4,7 @@
 
 This project is a demonstration of data visualisation and analytics capabilities for the **Enjoy Basketball** brand. 
 
-**Live Demo:** [Insert your Streamlit link here]
+**[Interactive Dashboard](https://draftanalysispy-4ladvsxb3og4piqnbvx7jv.streamlit.app/)**
 
 ## What This Shows
 
