@@ -11,7 +11,7 @@ st.markdown("Analyzing how draft position correlates with 2024-25 season perform
 def load_draft_data():
     """Load draft data from CSV"""
     try:
-        df = pd.read_csv('NBA/nba_draft_2024.csv')
+        df = pd.read_csv('nba_draft_2024.csv')
         df['Player'] = df['Player'].astype(str).str.strip()
         df['Player_Clean'] = df['Player'].str.replace(r'\s+(Jr\.|Sr\.|III|II|IV)\.?$', '', regex=True).str.strip()
         return df
@@ -23,7 +23,7 @@ def load_draft_data():
 def load_season_stats():
     """Load season stats from CSV"""
     try:
-        df = pd.read_csv('NBA/nba_season_2024_25.csv')
+        df = pd.read_csv('nba_season_2024_25.csv')
         df['Player'] = df['Player'].astype(str).str.strip()
         df['Player_Clean'] = df['Player'].str.replace(r'\s+(Jr\.|Sr\.|III|II|IV)\.?$', '', regex=True).str.strip()
         
