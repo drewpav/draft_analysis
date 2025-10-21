@@ -3,9 +3,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import os
 
-st.set_page_config(page_title="NBA Draft vs Performance", layout="wide")
-st.title("NBA Draft Position vs Current Season Performance")
-st.markdown("Analyzing how draft position correlates with 2024-25 season performance")
+st.set_page_config(page_title="NBA Draft Position Compared to Player Performance", layout="wide")
+st.title("Draft Pick vs Current Season Performance")
+st.markdown("Analysing how draft position correlates with 2024-25 season performance")
 
 @st.cache_data
 def load_draft_data():
@@ -141,7 +141,7 @@ if draft_df is not None and season_df is not None:
                         st.caption("Weak relationship")
                 
                 with col2:
-                    st.metric("Players Analyzed", len(filtered_df))
+                    st.metric("Players Analysed", len(filtered_df))
                 
                 with col3:
                     st.metric("Avg Minutes", f"{filtered_df['MP'].mean():.0f}")
